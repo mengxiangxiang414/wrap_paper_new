@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 from transform import cvtColor, warpAffine, computer_width_height
-from corner_detection_LSD import detect_corners
+from corner_detection_LSD_new import detect_corners
 from corner_detection1 import detect_corners1
 
 
@@ -10,7 +10,7 @@ import time
 
 if __name__ == "__main__":
 
-    filename = '10.jpg'
+    filename = '14.jpg'
     time1 = time.time()
     path = os.path.join('g:/wrap/img2', filename)
     src_img = cv2.imread(path)
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     #gray_img = cv2.erode(gray_img, kernel)
     #gray_img = cv2.dilate(gray_img, kernel)
     grad_img = cv2.GaussianBlur(gray_img, (5, 5), 0)
-    detect_img, detected_corner = detect_corners(gray_img, 12, 10, 40, 2, 2, 20, 0.7)
+    detect_img, detected_corner = detect_corners(gray_img, 12, 10, 40, 2, 1, 20, 0.7)
     # if cv2.waitKey(30) & 0xFF == ord('q'):
     #     break
 

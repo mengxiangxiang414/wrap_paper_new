@@ -9,10 +9,10 @@ from corner_detection1 import detect_corners1
 import time
 
 if __name__ == "__main__":
-    files = os.listdir('g:/wrap/books')
+    files = os.listdir('g:/wrap/img2')
     for filename in files:
         time1 = time.time()
-        path = os.path.join('g:/wrap/books', filename)
+        path = os.path.join('g:/wrap/img2', filename)
         src_img = cv2.imread(path)
         gray_img = cv2.cvtColor(src_img,cv2.COLOR_BGR2GRAY)
         gray_img_ori = np.copy(gray_img)
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         # f.close()
         print('time===',str(time2-time1))
         cv2.imshow("draw_",draw_img)
-        cv2.imwrite('g:/wrap/books7/'+filename,draw_img)
+        cv2.imwrite('g:/wrap/img3/'+filename,draw_img)
         if cv2.waitKey(2000) & 0xFF == ord('q'):
             continue
 

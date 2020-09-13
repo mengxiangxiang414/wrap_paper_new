@@ -25,8 +25,8 @@ def get_LSD(gray_img):
                 continue
 
         line_len = np.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
-        if line_len > 450:
-            a = 4
+        # if line_len > 450:
+        #     a = 4
         #     cv2.line(new_img, (x0, y0), (x1, y1), 255, 1, cv2.LINE_AA)
         if line_len > num_lines/1000*20:
             cv2.line(new_img, (x0, y0), (x1, y1), 255, 1, cv2.LINE_AA)

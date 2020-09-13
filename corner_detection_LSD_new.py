@@ -23,6 +23,151 @@ vote_rate = 0.5
 max_min_ratio = 1.8#最长边比最短边
 
 
+def houghLines_new(grad_img,vote_table,theta_range,rho_range,m,n):
+    """
+    从梯度图进行hough变换，检测直线
+    :param grad_img: 梯度图
+    :return: 检测出来的直线的极坐标表示
+    """
+    # --------------------------------------投票------------------------------------------
+    # rho_max = math.sqrt(grad_img.shape[0] * grad_img.shape[0] + grad_img.shape[1] * grad_img.shape[1])
+    # #rho_max = max(grad_img.shape)
+    # time1 = time.time()
+    # if theta_times != 0:
+    #     m = 180*theta_times//2
+    # if rho_times != 0:
+    #     n = int(max(grad_img.shape)*rho_times/2)
+    # #m, n = 180, int(rho_max)
+    # theta_range = np.linspace(0, np.pi, m)
+    # rho_range = np.linspace(-rho_max, rho_max, n)
+    # # 投票的表格
+    # vote_table = np.zeros(shape=(m, n))
+    #
+    # row_cor, col_cor = np.where(grad_img > 0)  # 挑出有选举权的点,假设有K个
+    # cor_mat = np.stack((row_cor, col_cor), axis=1)  # K*2
+    # K = cor_mat.shape[0]
+    #
+    # cos_theta = np.cos(theta_range)
+    # sin_theta = np.sin(theta_range)
+    # # 这是一个大坑，row实际对应的是y
+    # # theta_mat = np.stack((cos_theta, sin_theta), axis=0)  # 2*m
+    # theta_mat = np.stack((sin_theta, cos_theta), axis=0)  # 2*m
+    #
+    # y_mat = np.matmul(cor_mat, theta_mat)  # K*m
+    #
+    # rho_ind = np.round(
+    #         (y_mat - (-rho_max)) * (n - 1) / (rho_max - (-rho_max))
+    # ).astype(np.int32)  # K*m
+    # # rho_ind = (
+    # #         (y_mat - (-rho_max)) * (n - 1) / (rho_max - (-rho_max))
+    # # )
+    # # rho_ind = np.round(rho_ind)
+    # # rho_ind = rho_ind.astype(np.int32)  # K*m
+    # rho_ind = np.ravel(rho_ind, order='F')  # 在列方向stack
+    #
+    # theta_ind = np.arange(0, m)[:, np.newaxis]
+    # theta_ind = np.repeat(theta_ind, K)
+    #
+    #
+    # np.add.at(vote_table, (theta_ind, rho_ind), 1)  # 在vote_table中投票
+    time2 = time.time()
+    #print("pre:{}".format(time2 - time1))
+    # ----------------------------------过滤 1： 选出不同的直线-------------------------------
+    # 取出top_k条不同的直线
+    #top_k = top_k
+    #print("top_k=",top_k)
+    top_vert = 0
+    top_hori = 0
+    # unravel_index: https://www.jianshu.com/p/a7e19847bd39 -> 将一维index转换到(m,n)维上
+    argmax_ind = np.argsort(-vote_table.ravel(), )
+    argmax_ind = np.unravel_index(argmax_ind, (m, n))
+    argmax_ind = np.dstack(argmax_ind)
+    time3 = time.time()
+    #print("top:{}".format(time3 - time2))
+    argmax_ind = argmax_ind[0, :, :]
+    valid_lines = np.zeros((top_k, 2))
+    exist_num = 0
+
+    #找主方向
+    main_theta = 0
+    for i in range(10):
+        main_theta_ind,main_rho_ind = tuple(argmax_ind[i])
+        temp_main_theta = theta_range[main_theta_ind]
+        if temp_main_theta > 1.5:
+            temp_main_theta2 = 3.141 - temp_main_theta
+            if temp_main_theta2 < 0.3 or temp_main_theta2 > 1.2:
+                main_theta = temp_main_theta
+                break
+        else:
+            if temp_main_theta < 0.3 or temp_main_theta > 1.2:
+                main_theta = temp_main_theta
+                break
+
+    # 在中心点的上下左右各设置一个数组，来保存合格的直线
+    left_lines = []
+    top_lines = []
+    right_lines = []
+    bottom_lines = []
+
+    left_left_lines = []
+    top_top_lines = []
+    right_right_lines = []
+    bottom_bottom_lines = []
+
+    left_lines_offset = []
+    top_lines_offset = []
+    right_lines_offset = []
+    bottom_lines_offset = []
+
+    all_lines_stop = [1,1,1,1]
+
+    time_ccc = time.time()
+    for i in range(0, 500):
+        row_ind, col_ind = tuple(argmax_ind[i])
+        theta = theta_range[row_ind]
+        rho = rho_range[col_ind]
+        if theta==0 and rho==0:
+            continue
+        delta_theta = abs(theta-main_theta)
+        if delta_theta>1.5:
+            delta_theta = 3.141-delta_theta
+        if delta_theta>0.25 and delta_theta<1.25:
+            continue
+
+        if is_new_line2(theta, rho, valid_lines, exist_num, grad_img.shape,
+                       left_lines,top_lines,right_lines,bottom_lines, vote_table[row_ind,col_ind], all_lines_stop,
+                        left_left_lines,top_top_lines,right_right_lines,bottom_bottom_lines,
+                        left_lines_offset,top_lines_offset,right_lines_offset,bottom_lines_offset):
+        # if is_new_line(theta, rho, valid_lines, exist_num, grad_img.shape,
+        #                    left_lines, top_lines, right_lines, bottom_lines, vote_table[row_ind, col_ind],
+        #                    all_lines_stop):
+        #if True:
+            # 遇到新的线了
+            #水平的、竖直的每一种都至少取5个
+            is_vert_line = np.abs(theta - 1.5) > 0.5
+            if is_vert_line:
+                if top_vert<(top_k//2):
+                    valid_lines[exist_num][0] = theta
+                    valid_lines[exist_num][1] = rho
+                    top_vert += 1
+                    exist_num += 1
+            else :
+                if top_hori<(top_k//2):
+                    valid_lines[exist_num][0] = theta
+                    valid_lines[exist_num][1] = rho
+                    top_hori += 1
+                    exist_num += 1
+            if top_hori>=(top_k//2) and top_vert>=(top_k//2):
+                break
+            # if max(all_lines_stop)==0:
+            #     break
+            # if i>200 and len(left_lines)>0 and len(top_lines)and len(right_lines) and len(bottom_lines):
+            #     break
+
+    time_cccd = time.time()
+    #print("cccddd{}".format(time_cccd-time_ccc))
+    return valid_lines
+
 def houghLines(grad_img):
     """
     从梯度图进行hough变换，检测直线
@@ -242,16 +387,19 @@ def detect_corners(gray_img, top_lines, low_threshold, up_threshold, theta, rho,
 
 
     #======================
-    rho_max = max(gray_img.shape)
-    if theta_times != 0:
-        m = 180*theta_times//2
-    if rho_times != 0:
-        n = int(max(gray_img.shape)*rho_times/2)
-    #m, n = 180, int(rho_max)
-    theta_range = np.linspace(0, np.pi, m)
-    rho_range = np.linspace(-rho_max, rho_max, n)
+    h, w = gray_img.shape
+
+    rho_max = math.sqrt(h * h + w * w)
+
+    m = 180
+
+    # n = int(max(gray_img.shape))
+    n = int(rho_max)
+    # m, n = 180, int(rho_max)
+    theta_range = np.linspace(0, np.pi, m + 1)
+    rho_range = np.linspace(-rho_max, rho_max, n + 1)
     # 投票的表格
-    vote_table = np.zeros(shape=(m, n))
+    vote_table = np.zeros(shape=(m + 1, n + 1))
 
     #======================
 
@@ -265,7 +413,7 @@ def detect_corners(gray_img, top_lines, low_threshold, up_threshold, theta, rho,
 
     time3 = time.time()
     print("LSD_lines:{}".format(time3 - time2))
-    polar_lines = houghLines(grad_img)
+    polar_lines = houghLines_new(grad_img,vote_table,theta_range,rho_range,m,n)
 
     time4 = time.time()
     print("houghLines:{}".format(time4 - time3))

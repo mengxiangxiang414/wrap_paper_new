@@ -14,41 +14,35 @@ def get_LSD(gray_img, vote_table):
     dlines = lsd.detect(gray_img)
     # 绘制检测结果
     num_lines = dlines[0].size
+
+
     for dline in dlines[0]:
         x0 = int(round(dline[0][0]))
         y0 = int(round(dline[0][1]))
         x1 = int(round(dline[0][2]))
         y1 = int(round(dline[0][3]))
 
-        if (x1-x0)!=0:
-            tan_theta = abs((y1-y0)/(x1-x0))
-            if tan_theta>0.35 and tan_theta<np.tan(np.pi/3):
-                continue
+        line_len = int(np.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2))
 
-        #TODO 计算直线的对应的ρ、θ
-        # rho = getDis(0.0,0.0,x0,y0,x1,y1);
-        # if x0==x1:
-        #     theta = 0
-        # else:
-        #     theta = np.arctan((y0-y1)/(x0-x1))
-        #     if theta>0:
-        #         theta = 90-theta
-        #     else:
-        #         thtea = 90+theta
-        #
-        # line_len = np.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
-        # if line_len > 450:
-        #     a = 4
-        #     cv2.line(new_img, (x0, y0), (x1, y1), 255, 1, cv2.LINE_AA)
-        if line_len > num_lines/1000*20:
-            cv2.line(new_img, (x0, y0), (x1, y1), 255, 1, cv2.LINE_AA)
-        #cv2.line(new_img, (x0, y0), (x1,y1), 255, 1, cv2.LINE_AA)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    new_img = cv2.dilate(new_img, kernel)
-    new_img = cv2.erode(new_img,kernel)
-    new_img = (morphology.skeletonize(new_img//255)+0)*255.0
-    #new_img = (new_img+0)*255.0
-    return new_img
+        # TODO 计算直线的对应的ρ、θ
+        rho = getDis(0.0, 0.0, x0, y0, x1, y1)
+        if x0 == x1:
+            theta = 0
+        else:
+            theta = np.arctan((y0 - y1) / (x0 - x1))
+            theta = theta * 180 / np.pi
+            theta = 90 + theta
+
+        theta_floor = int(np.floor(theta))
+        theta_ceil = int(np.ceil(theta))
+        rho_floor = int(np.floor(rho / 2) + (n + 1) // 2)
+        rho_ceil = int(np.ceil(rho / 2) + (n + 1) // 2)
+
+        np.add.at(vote_table, (theta_floor, rho_floor), line_len)
+        np.add.at(vote_table, (theta_ceil, rho_floor), line_len)
+        np.add.at(vote_table, (theta_floor, rho_ceil), line_len)
+        np.add.at(vote_table, (theta_ceil, rho_ceil), line_len)
+    # return new_img
 
 #点到直线的距离
 def getDis(pointX,pointY,lineX1,lineY1,lineX2,lineY2):

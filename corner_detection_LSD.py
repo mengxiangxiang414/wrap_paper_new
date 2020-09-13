@@ -55,7 +55,7 @@ def houghLines(grad_img):
 
     y_mat = np.matmul(cor_mat, theta_mat)  # K*m
 
-    rho_ind = (
+    rho_ind = np.round(
             (y_mat - (-rho_max)) * (n - 1) / (rho_max - (-rho_max))
     ).astype(np.int32)  # K*m
     rho_ind = np.ravel(rho_ind, order='F')  # 在列方向stack
@@ -267,7 +267,7 @@ def detect_corners(gray_img, top_lines, low_threshold, up_threshold, theta, rho,
 
     cv2.imshow('after', grad_img)
 
-    cv2.waitKey(0)
+    #cv2.waitKey(0)
     time5 = time.time()
     # -------------------------------计算交点----------------------------------
     # 1. 为了化简计算,把直线分成接近水平/垂直, 两种直线

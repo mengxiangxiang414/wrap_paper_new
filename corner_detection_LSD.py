@@ -55,7 +55,7 @@ def houghLines(grad_img):
 
     y_mat = np.matmul(cor_mat, theta_mat)  # K*m
 
-    rho_ind = np.round(
+    rho_ind = (
             (y_mat - (-rho_max)) * (n - 1) / (rho_max - (-rho_max))
     ).astype(np.int32)  # K*m
     rho_ind = np.ravel(rho_ind, order='F')  # 在列方向stack
@@ -238,10 +238,12 @@ def detect_corners(gray_img, top_lines, low_threshold, up_threshold, theta, rho,
     time1 = time.time()
 
     time2 = time.time()
-
+    h,w = gray_img.shape
 
     grad_img = get_LSD(gray_img)
-    cv2.imshow('LSD_lines', grad_img)
+    # cv2.imshow('LSD_lines', grad_img)
+    #grad_img = cv2.resize(grad_img,(w,h))
+    #cv2.imshow('half_LSD_line',grad_img)
 
     time3 = time.time()
     print("LSD_lines:{}".format(time3 - time2))
@@ -251,21 +253,21 @@ def detect_corners(gray_img, top_lines, low_threshold, up_threshold, theta, rho,
     print("houghLines:{}".format(time4 - time3))
 
 
-    for i in range(polar_lines.shape[0]):
-        theta, rho = tuple(polar_lines[i])
-        # print(theta, rho)
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
-        x1 = int(x0 + 1000 * (-b))
-        y1 = int(y0 + 1000 * (a))
-        x2 = int(x0 - 1000 * (-b))
-        y2 = int(y0 - 1000 * (a))
-        #逐条显示画出来的线
-        cv2.line(grad_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
+    # for i in range(polar_lines.shape[0]):
+    #     theta, rho = tuple(polar_lines[i])
+    #     # print(theta, rho)
+    #     a = np.cos(theta)
+    #     b = np.sin(theta)
+    #     x0 = a * rho
+    #     y0 = b * rho
+    #     x1 = int(x0 + 1000 * (-b))
+    #     y1 = int(y0 + 1000 * (a))
+    #     x2 = int(x0 - 1000 * (-b))
+    #     y2 = int(y0 - 1000 * (a))
+    #     #逐条显示画出来的线
+    #     cv2.line(grad_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
 
-    cv2.imshow('after', grad_img)
+    # cv2.imshow('after', grad_img)
 
     #cv2.waitKey(0)
     time5 = time.time()
@@ -324,7 +326,7 @@ def detect_corners(gray_img, top_lines, low_threshold, up_threshold, theta, rho,
     points = np.array(points).reshape(2, 2, 2)
 
     time6 = time.time()
-    print("area:{}".format(time6 - time5))
+    #print("area:{}".format(time6 - time5))
 
     left_top = points[0][0]
     left_bottom = points[0][1]

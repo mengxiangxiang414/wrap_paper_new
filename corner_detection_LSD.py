@@ -121,14 +121,15 @@ def houghLines(grad_img):
         row_ind, col_ind = tuple(argmax_ind[i])
         theta = theta_range[row_ind]
         rho = rho_range[col_ind]
+
         if theta==0 and rho==0:
             continue
         delta_theta = abs(theta-main_theta)
         if delta_theta>1.5:
             delta_theta = 3.141-delta_theta
-        if delta_theta>0.25 and delta_theta<1.25:
+        if delta_theta>0.52 and delta_theta<1.04:
             continue
-
+        # checkLines(theta, rho, grad_img)
         if is_new_line2(theta, rho, valid_lines, exist_num, grad_img.shape,
                        left_lines,top_lines,right_lines,bottom_lines, vote_table[row_ind,col_ind], all_lines_stop,
                         left_left_lines,top_top_lines,right_right_lines,bottom_bottom_lines,
@@ -162,6 +163,26 @@ def houghLines(grad_img):
     time_cccd = time.time()
     #print("cccddd{}".format(time_cccd-time_ccc))
     return valid_lines
+
+def checkLines(theta, rho, grad_img):
+    # for i in range(lines.shape[0]):
+    # theta, rho = tuple(lines[i])
+    # print(theta, rho)
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    x1 = int(x0 + 1000 * (-b))
+    y1 = int(y0 + 1000 * (a))
+    x2 = int(x0 - 1000 * (-b))
+    y2 = int(y0 - 1000 * (a))
+    # 逐条显示画出来的线
+    cv2.line(grad_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
+
+    cv2.imshow('after', grad_img)
+
+    cv2.waitKey(0)
+
 
 def out_boundary(p,shape):
     y,x = p
@@ -266,10 +287,10 @@ def detect_corners(gray_img, top_lines, low_threshold, up_threshold, theta, rho,
     #     y2 = int(y0 - 1000 * (a))
     #     #逐条显示画出来的线
     #     cv2.line(grad_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
-
+    #
     # cv2.imshow('after', grad_img)
 
-    #cv2.waitKey(0)
+    cv2.waitKey(0)
     time5 = time.time()
     # -------------------------------计算交点----------------------------------
     # 1. 为了化简计算,把直线分成接近水平/垂直, 两种直线
